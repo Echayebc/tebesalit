@@ -31,8 +31,42 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
         s.setSupportMultipleWindows(true);
-        // رجعنا متصفح هاتف - ثابت، ماشي كمبيوتر
         s.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+    }
+
+    // هاذي هي اللي تفتح ماسنجر في نافذة منبثقة داخل التطبيق
+    private void openInPopup(String url) {
+        if (popupView != null) {
+            popupView.loadUrl(url);
+            return;
+        }
+        popupView = new WebView(MainActivity.this);
+        setup(popupView);
+        popupView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return false;
+            }
+        });
+        popupView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onCloseWindow(WebView window) {
+                closePopup();
+            }
+        });
+        FrameLayout layout = new FrameLayout(MainActivity.this);
+        layout.addView(popupView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(layout);
+        popupView.loadUrl(url);
+    }
+
+    private void closePopup() {
+        if (popupView != null) {
+            try { ((ViewGroup) popupView.getParent()).removeView(popupView); } catch (Exception e) {}
+            popupView.destroy();
+            popupView = null;
+            setContentView(webView);
+        }
     }
 
     @Override
@@ -46,29 +80,34 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // ماسنجر يفتح في نافذة أخرى - تطبيق ماسنجر اذا كان موجود، ولا متصفح خارجي
-                if (url.contains("messenger.com") || url.contains("fb-messenger") || url.startsWith("intent://")) {
-                    try {
-                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(i);
-                    } catch (Exception e) {
-                        // اذا ماكانش ماسنجر، افتحه في متصفح خارجي
+
+                // 1. اذا ضغط على الدردشة / ماسنجر -> افتحها في نافذة منبثقة داخل التطبيق، ماشي برا
+                if (url.contains("messenger.com") || url.contains("m.me") || url.contains("/messages") || url.contains("fb-messenger")) {
+                    String finalUrl = url;
+                    // اذا كان رابط intent:// نحولوه لـ https عادي
+                    if (url.startsWith("intent://")) {
                         try {
-                            Intent i2 = new Intent(Intent.ACTION_VIEW, Uri.parse("https://m.me/"));
-                            startActivity(i2);
-                        } catch (Exception e2) {}
+                            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                            String fallback = intent.getStringExtra("browser_fallback_url");
+                            if (fallback != null) finalUrl = fallback;
+                            else finalUrl = "https://m.facebook.com/messages/";
+                        } catch (Exception e) {
+                            finalUrl = "https://m.facebook.com/messages/";
+                        }
                     }
+                    // اذا كان رابط ماسنجر تاع التطبيق، نحولوه لنسخة الويب اللي تخدم
+                    if (finalUrl.contains("fb-messenger://")) finalUrl = "https://m.facebook.com/messages/";
+                    openInPopup(finalUrl);
                     return true;
                 }
                 return false;
             }
         });
 
-        // نافذة أخرى ثابتة للماسنجر و النوافذ المنبثقة
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                // فيسبوك يطلب نافذة جديدة -> نعطيه نافذة منبثقة داخل التطبيق
                 popupView = new WebView(MainActivity.this);
                 setup(popupView);
                 popupView.setWebViewClient(new WebViewClient());
@@ -83,27 +122,21 @@ public class MainActivity extends Activity {
             }
             @Override
             public void onCloseWindow(WebView window) {
-                if (popupView != null) {
-                    ((ViewGroup) popupView.getParent()).removeView(popupView);
-                    popupView.destroy();
-                    popupView = null;
-                    setContentView(webView);
-                }
+                closePopup();
             }
         });
 
-        // التكيف الآلي: كل مرة يجيب آخر نسخة من فيسبوك
-        // و البناء الآلي يبقى يخدم من GitHub Actions
         webView.loadUrl("https://m.facebook.com/login");
     }
 
     @Override
     public void onBackPressed() {
         if (popupView != null) {
-            ((ViewGroup) popupView.getParent()).removeView(popupView);
-            popupView.destroy();
-            popupView = null;
-            setContentView(webView);
+            if (popupView.canGoBack()) {
+                popupView.goBack();
+            } else {
+                closePopup();
+            }
         } else if (webView.canGoBack()) {
             webView.goBack();
         } else {
