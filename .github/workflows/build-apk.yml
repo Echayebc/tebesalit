@@ -1,0 +1,25 @@
+name: Build Tebesalit APK Simple
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Make APK
+        uses: android-actions/setup-android@v3
+      - name: Build
+        run: |
+          echo "y" | sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          gradle assembleDebug
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tebesalit-app
+          path: app/build/outputs/apk/debug/app-debug.apk
