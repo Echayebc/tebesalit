@@ -11,44 +11,13 @@ import android.webkit.WebResourceRequest;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.content.Intent;
+import android.net.Uri;
 
 public class MainActivity extends Activity {
     private WebView webView;
     private WebView popupView;
 
-    // هذا هو الحل: كود يخلي الدردشة على طول الهاتف كامل
-    private String FULL_CHAT_JS = "javascript:(function(){"
-        + "function fix(){"
-        + "var all=document.querySelectorAll('div');"
-        + "for(var i=0;i<all.length;i++){"
-        + "var e=all[i];"
-        + "var s=e.getAttribute('style')||'';"
-        + "if(s.indexOf('height')!==-1 || e.getAttribute('role')==='dialog'){"
-        + "e.style.setProperty('height','100vh','important');"
-        + "e.style.setProperty('max-height','100vh','important');"
-        + "e.style.setProperty('width','100%','important');"
-        + "e.style.setProperty('max-width','100%','important');"
-        + "e.style.setProperty('position','fixed','important');"
-        + "e.style.setProperty('top','0','important');"
-        + "e.style.setProperty('left','0','important');"
-        + "e.style.setProperty('right','0','important');"
-        + "e.style.setProperty('bottom','0','important');"
-        + "e.style.setProperty('z-index','9999','important');"
-        + "}"
-        + "}"
-        + "var chats=document.querySelectorAll('[aria-label*=\"Chat\"],[data-testid*=\"chat\"]');"
-        + "for(var j=0;j<chats.length;j++){"
-        + "chats[j].style.setProperty('height','100vh','important');"
-        + "chats[j].style.setProperty('width','100vw','important');"
-        + "chats[j].style.setProperty('position','fixed','important');"
-        + "chats[j].style.setProperty('top','0','important');"
-        + "chats[j].style.setProperty('left','0','important');"
-        + "}"
-        + "}"
-        + "fix(); setInterval(fix, 800);"
-        + "})()";
-
-    private void setupWebView(WebView w) {
+    private void setup(WebView w) {
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(w, true);
@@ -60,11 +29,10 @@ public class MainActivity extends Activity {
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
-        s.setMediaPlaybackRequiresUserGesture(false);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
         s.setSupportMultipleWindows(true);
-        s.setUserAgentString("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        // رجعنا متصفح هاتف - ثابت، ماشي كمبيوتر
+        s.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
     }
 
     @Override
@@ -72,33 +40,24 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         webView = new WebView(this);
         setContentView(webView);
-        setupWebView(webView);
+        setup(webView);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                // كل ما تفتح صفحة، نحقن الكود باش الدردشة تولي على طول الهاتف
-                view.evaluateJavascript(FULL_CHAT_JS, null);
-            }
-            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // اذا ضغطت على دردشة، افتحها كاملة في نفس الصفحة
-                if (url.contains("/messages/t/") || url.contains("messenger.com/t/")) {
-                    view.loadUrl(url);
-                    return true;
-                }
-                if (url.contains("messenger.com") || url.contains("m.facebook.com/messages")) {
-                    view.loadUrl("https://mbasic.facebook.com/messages/");
-                    return true;
-                }
-                if (url.startsWith("intent://") || url.startsWith("fb-messenger://")) {
+                // ماسنجر يفتح في نافذة أخرى - تطبيق ماسنجر اذا كان موجود، ولا متصفح خارجي
+                if (url.contains("messenger.com") || url.contains("fb-messenger") || url.startsWith("intent://")) {
                     try {
-                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-                        startActivity(intent);
+                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
                     } catch (Exception e) {
-                        view.loadUrl("https://mbasic.facebook.com/messages/");
+                        // اذا ماكانش ماسنجر، افتحه في متصفح خارجي
+                        try {
+                            Intent i2 = new Intent(Intent.ACTION_VIEW, Uri.parse("https://m.me/"));
+                            startActivity(i2);
+                        } catch (Exception e2) {}
                     }
                     return true;
                 }
@@ -106,23 +65,16 @@ public class MainActivity extends Activity {
             }
         });
 
+        // نافذة أخرى ثابتة للماسنجر و النوافذ المنبثقة
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
                 popupView = new WebView(MainActivity.this);
-                setupWebView(popupView);
-                popupView.setWebViewClient(new WebViewClient() {
-                    @Override
-                    public void onPageFinished(WebView v, String url) {
-                        super.onPageFinished(v, url);
-                        v.evaluateJavascript(FULL_CHAT_JS, null);
-                    }
-                });
+                setup(popupView);
+                popupView.setWebViewClient(new WebViewClient());
                 popupView.setWebChromeClient(this);
-                // نافذة كاملة 100% طول و عرض
                 FrameLayout layout = new FrameLayout(MainActivity.this);
-                FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                layout.addView(popupView, p);
+                layout.addView(popupView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                 setContentView(layout);
                 WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
                 transport.setWebView(popupView);
@@ -140,7 +92,9 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.loadUrl("https://mbasic.facebook.com/login");
+        // التكيف الآلي: كل مرة يجيب آخر نسخة من فيسبوك
+        // و البناء الآلي يبقى يخدم من GitHub Actions
+        webView.loadUrl("https://m.facebook.com/login");
     }
 
     @Override
