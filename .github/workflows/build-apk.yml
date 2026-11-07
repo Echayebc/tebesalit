@@ -12,12 +12,17 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Make APK
-        uses: android-actions/setup-android@v3
-      - name: Build
+      - name: Accept Licenses and Build
         run: |
-          echo "y" | sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          gradle assembleDebug
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          mkdir -p $ANDROID_HOME/licenses
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "d56f5187479451eabf01f6f2f5230e67b8c7a" >> $ANDROID_HOME/licenses/android-sdk-license
+          echo "24333f8a63b6825a656882fa2f2492895e0e7a" >> $ANDROID_HOME/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
+          gradle assembleDebug --stacktrace
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
