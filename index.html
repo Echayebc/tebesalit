@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tebesalit - تيباساليت</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#f0f2f5}
+header{background:#1877f2;color:#fff;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+header b{font-size:22px}
+header span{background:#fff;color:#1877f2;padding:4px 10px;border-radius:20px;font-size:12px}
+.container{max-width:500px;margin:auto;padding:10px}
+.card{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.fb-btn{background:#1877f2;color:#fff;width:100%;padding:14px;border:none;border-radius:10px;font-size:17px;font-weight:bold;margin-bottom:10px}
+.fb-btn2{background:#42b72a;color:#fff;width:100%;padding:12px;border:none;border-radius:10px;font-weight:bold;margin-bottom:10px}
+.profile{display:flex;gap:10px;align-items:center}
+.avatar{width:45px;height:45px;background:#1877f2;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold}
+textarea,input{width:100%;border:1px solid #ddd;border-radius:20px;padding:10px;margin-top:10px;outline:none}
+.btn-post{background:#1877f2;color:#fff;width:100%;padding:10px;border:none;border-radius:20px;font-weight:bold;margin-top:8px}
+.actions{display:flex;border-top:1px solid #eee;margin-top:10px;padding-top:8px}
+.actions button{flex:1;background:none;border:none;padding:7px;font-weight:bold;color:#555}
+.comment{background:#f0f2f5;padding:7px 10px;border-radius:15px;margin-top:5px;font-size:14px}
+</style>
+</head>
+<body>
+<header><b>تيباساليت</b><span>Tebesalit Lite</span></header>
+<div class="container">
+<button class="fb-btn" onclick="window.location.href='https://m.facebook.com'">📘 افتح فيسبوك من تيباساليت</button>
+<button class="fb-btn2" onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=https://echayebc.github.io/tebesalit','_blank')">↗️ شارك تيباساليت في فيسبوك</button>
+
+<div class="card">
+<div class="profile"><div class="avatar">T</div><div><b>أنا - Ouenza</b><br><small style="color:#777">تبسة ، الجزائر 📍</small></div></div>
+<textarea id="postText" rows="2" placeholder="واش راك تخمم؟ اكتب لناس تبسة..."></textarea>
+<input id="postName" placeholder="اسمك (مثال: محمد من الونزة)">
+<button class="btn-post" onclick="addPost()">نشر في تيباساليت 🚀</button>
+</div>
+<div id="feed"></div>
+</div>
+<script>
+let posts = JSON.parse(localStorage.getItem('tebesalit')||'[]');
+if(posts.length==0){
+ posts=[
+  {name:"أدمن تيباساليت",text:"مرحبا بيك في تيباساليت 👋 فيسبوك لايت تاع تبسة و الونزة. خفيف و يخدم مع فيسبوك عادي.",likes:12,comments:["مرحبا بيكم 🔥"]},
+  {name:"يوسف من تبسة",text:"شكون يعرف صيدلية محلولة دوك في تبسة؟",likes:5,comments:["صيدلية النور محلولة"]},
+ ];
+ save();
+}
+function save(){localStorage.setItem('tebesalit',JSON.stringify(posts))}
+function render(){
+ let f=document.getElementById('feed'); f.innerHTML='';
+ posts.forEach((p,i)=>{
+  f.innerHTML+=`<div class="card"><div class="profile"><div class="avatar">${p.name[0]}</div><div><b>${p.name}</b><br><small>تبسة 📍</small></div></div><div style="margin:8px 0;line-height:1.6">${p.text}</div><div style="font-size:13px;color:#555">❤️ ${p.likes} • 💬 ${p.comments.length}</div><div class="actions"><button onclick="like(${i})">👍 أعجبني</button><button onclick="sharePost(${i})">↗️ مشاركة</button></div><div>${p.comments.map(c=>`<div class="comment">${c}</div>`).join('')}</div></div>`;
+ });
+}
+function addPost(){let t=document.getElementById('postText').value.trim();let n=document.getElementById('postName').value.trim()||"أنا";if(!t) return alert("اكتب حاجة قبل");posts.unshift({name:n,text:t,likes:0,comments:[]});document.getElementById('postText').value='';save();render();}
+function like(i){posts[i].likes++;save();render();}
+function sharePost(i){window.open('https://www.facebook.com/sharer/sharer.php?u=https://echayebc.github.io/tebesalit&quote='+encodeURIComponent(posts[i].text),'_blank');}
+render();
+</script>
+</body>
+</html>
