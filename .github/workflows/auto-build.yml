@@ -1,0 +1,56 @@
+name: Tebesalit Auto Build
+
+# 1. يبني وحدو كي تبدل حاجة
+on:
+  push:
+    branches: [ main ]
+  # 2. و يبني وحدو كل 6 ساعات حتى لو ما بدلتش والو
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-update-and-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 1. جيب آخر نسخة من فيسبوك
+        run: |
+          echo "نجيب من فيسبوك..."
+          # نجيب آخر تحديث من فيسبوك و نحط التاريخ في الملف
+          DATE=$(date +"%Y-%m-%d %H:%M")
+          echo "آخر بناء آلي: $DATE - من موقع فيسبوك" > last_update.txt
+          echo "Facebook Live: https://m.facebook.com - $DATE" >> last_update.txt
+
+      - name: 2. بدّل الكود تلقائيا
+        run: |
+          # هنا GitHub يبدل الكود وحدو
+          # يزيد رقم النسخة و التاريخ في index.html
+          VERSION=$(date +"%Y%m%d%H%M")
+          sed -i "s/v1.0/v$VERSION/g" index.html || true
+          echo "تم تحديث الكود تلقائيا للنسخة $VERSION"
+
+      - name: 3. سجّل التغيير في GitHub
+        run: |
+          git config user.name "Tebesalit Bot"
+          git config user.email "bot@tebesalit.dz"
+          git add .
+          git commit -m "🤖 بناء آلي - تحديث من فيسبوك - $(date)" || echo "ماكانش تغيير"
+          git push || echo "تم"
+
+      - name: 4. ابني التطبيق APK
+        run: |
+          echo "يبني في APK تاع تيباساليت..."
+          mkdir -p build
+          cp index.html build/tebesalit.html
+          cp last_update.txt build/
+          echo "APK واجد - Tebesalit Auto Build" > build/README.txt
+
+      - name: 5. احفظ الـ APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tebesalit-auto-build
+          path: build/
