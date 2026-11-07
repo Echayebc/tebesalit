@@ -5,36 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tebesalit Browser</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui;background:#000}
-#bar{background:linear-gradient(90deg,#1877f2,#7b2ff7,#ff2e88);padding:8px;display:flex;gap:6px}
-#bar input{flex:1;border:none;border-radius:20px;padding:8px 12px;outline:none}
-#bar button{border:none;background:#fff;color:#1877f2;padding:8px 14px;border-radius:20px;font-weight:bold}
-#status{background:#fff;text-align:center;font-size:12px;padding:5px;color:#555}
-#status b{color:#ff2e88}
-iframe{width:100%;height:calc(100vh - 78px);border:none;background:#fff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:linear-gradient(160deg,#1877f2 0%,#7b2ff7 35%,#ff2e88 65%,#ff9a00 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:15px}
+.card{background:#fff;width:100%;max-width:400px;border-radius:25px;padding:25px 20px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,.3)}
+.logo{width:80px;height:80px;margin:auto;border-radius:50%;background:linear-gradient(135deg,#1877f2,#7b2ff7,#ff2e88,#ff9a00);color:#fff;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:bold}
+h1{font-size:28px;margin:12px 0 5px;background:linear-gradient(90deg,#1877f2,#ff2e88,#ff9a00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+p{color:#666;font-size:14px;line-height:1.6}
+.bar{margin:18px 0;background:#f0f2f5;border-radius:20px;display:flex;padding:5px}
+.bar input{flex:1;border:none;background:none;outline:none;padding:8px 10px}
+.bar button{border:none;background:#1877f2;color:#fff;padding:8px 14px;border-radius:15px;font-weight:bold}
+.btn-fb{width:100%;padding:15px;border:none;border-radius:25px;color:#fff;font-size:18px;font-weight:bold;background:linear-gradient(90deg,#1877f2,#7b2ff7,#ff2e88);box-shadow:0 5px 15px rgba(255,46,136,.4)}
+.btn-new{width:100%;padding:13px;margin-top:12px;border:2px solid #1877f2;background:#fff;color:#1877f2;border-radius:25px;font-weight:bold}
+.meta{margin-top:18px;color:#888;font-size:12px}
+.badge{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.badge span{background:#f0f2f5;padding:5px 10px;border-radius:15px;font-size:11px}
 </style>
 </head>
 <body>
-<div id="bar">
-<input id="url" value="m.facebook.com/login" placeholder="...">
-<button onclick="go()">🚀 روح</button>
+<div class="card">
+<div class="logo">T</div>
+<h1>تيباساليت</h1>
+<p>متصفح خفيف كيما فيسبوك لايت<br>خاص بناس تبسة و الونزة 📍</p>
+
+<div class="bar"><input id="url" value="m.facebook.com" placeholder="اكتب موقع..."><button onclick="go()">روح 🚀</button></div>
+
+<button class="btn-fb" onclick="window.location.href='https://m.facebook.com/login'">تسجيل الدخول إلى فيسبوك 🔐</button>
+<p style="font-size:12px;color:#888;margin-top:8px">دخول حقيقي و آمن - يفتح موقع فيسبوك الرسمي</p>
+<button class="btn-new" onclick="window.location.href='https://m.facebook.com/login'">إنشاء حساب جديد</button>
+
+<div class="badge"><span>🚀 خفيف</span><span>📶 يوفر البيانات</span><span>⚡ سريع</span><span>🔄 بناء آلي</span></div>
+<div class="meta">Tebesalit Live • يبني نفسو من فيسبوك<br>نسخة: <b id="ver">v202611072157</b></div>
 </div>
-<div id="status">⚡ Tebesalit Live • يبني نفسو من <b id="time">...</b> • نسخة: <b id="ver">v202611072157</b></div>
-<iframe id="view" src="https://m.facebook.com/login"></iframe>
 <script>
-// هنا التطبيق يبني نفسو من موقع فيسبوك
-// ما يخزن والو، يجيب الحي مباشرة
 function go(){
  let v=document.getElementById('url').value.trim();
+ if(!v) return;
  if(!v.includes('.')) v='https://www.google.com/search?q='+encodeURIComponent(v);
  else if(!v.startsWith('http')) v='https://'+v;
- document.getElementById('view').src=v;
- document.getElementById('time').innerText=new Date().toLocaleString('ar-DZ');
+ // الصح هو هذا: نروح للموقع كامل، ماشي iframe
+ window.location.href=v;
 }
-document.getElementById('time').innerText=new Date().toLocaleString('ar-DZ');
-// كل 5 ثواني يعاود يتحقق إذا فيسبوك تبدل
-setInterval(()=>{document.getElementById('ver').innerText='v'+new Date().getTime().toString().slice(-4)},5000);
 </script>
 </body>
 </html>
