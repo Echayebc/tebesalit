@@ -1,13 +1,30 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+}
+
 android {
-    applicationId "com.tebesalit.lite"
+    namespace 'com.tebesalit.lite'
     compileSdk 34
+
     defaultConfig {
-        applicationId "com.tebesalit.browser"
-        minSdk 21
+        applicationId 'com.tebesalit.lite'
+        minSdk 24
         targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName '1.0-Lite'
     }
-    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
 }
