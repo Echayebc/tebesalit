@@ -1,4 +1,4 @@
-package com.tebesalit.browser;
+package com.tebesalit.lite;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Message;
@@ -21,19 +21,21 @@ public class MainActivity extends Activity {
     private FrameLayout popupContainer;
     private Button closeBtn;
 
-    // ========== فيسبوك الرئيسي - هاتف ==========
-    private void setup(WebView w) {
+    // ========== اعدادات Lite - توفير البيانات ==========
+    private void setupLite(WebView w) {
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(w, true);
-        w.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        // Lite: ما نستعملوش تسريع العتاد القوي، نوفر بطارية و بيانات
+        w.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         w.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         w.setOverScrollMode(View.OVER_SCROLL_NEVER);
         WebSettings s = w.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Lite: استعمل الكاش أولا، ما تحملش كل مرة من جديد
+        s.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setAllowFileAccess(true);
@@ -42,51 +44,18 @@ public class MainActivity extends Activity {
         s.setSupportZoom(true);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
-        s.setTextZoom(100);
+        s.setTextZoom(90); // خط أصغر شوية = أقل بيانات
+        // Lite: الصور تتحمل بصح مضغوطة من سيرفر mbasic
         s.setLoadsImagesAutomatically(true);
         s.setBlockNetworkImage(false);
         s.setBlockNetworkLoads(false);
-        s.setMediaPlaybackRequiresUserGesture(false);
+        // Lite: الفيديو ما يشتغلش وحدو أبدا
+        s.setMediaPlaybackRequiresUserGesture(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        s.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
+        s.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
         w.setInitialScale(100);
-        // هاتف - ثابت و خفيف
-        s.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-    }
-
-    // ========== النافذة المنبثقة - كمبيوتر ==========
-    // هذا هو الحل لرسالة "يجب استخدام Messenger"
-    // فيسبوك يسمح بالدردشة غير للكمبيوتر، هذاك علاش النافذة تتظاهر بلي هي كمبيوتر
-    private void setupPopup(WebView w) {
-        CookieManager cm = CookieManager.getInstance();
-        cm.setAcceptCookie(true);
-        cm.setAcceptThirdPartyCookies(w, true);
-        w.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        w.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        w.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        WebSettings s = w.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setAllowFileAccess(true);
-        s.setJavaScriptCanOpenWindowsAutomatically(true);
-        s.setSupportMultipleWindows(true);
-        s.setSupportZoom(true);
-        s.setBuiltInZoomControls(false);
-        s.setDisplayZoomControls(false);
-        s.setTextZoom(100);
-        s.setLoadsImagesAutomatically(true);
-        s.setBlockNetworkImage(false);
-        s.setBlockNetworkLoads(false);
-        s.setMediaPlaybackRequiresUserGesture(false);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        s.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
-        w.setInitialScale(100);
-        // كمبيوتر - باش فيسبوك يسمح بالدردشة
-        s.setUserAgentString("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        // هاتف خفيف - نفس تاع لايت
+        s.setUserAgentString("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
     }
 
     private String fixIntentUrl(String url) {
@@ -96,13 +65,21 @@ public class MainActivity extends Activity {
                 String fallback = intent.getStringExtra("browser_fallback_url");
                 if (fallback != null && !fallback.isEmpty()) return fallback;
             } catch (Exception e) {}
-            return "https://www.messenger.com/t/";
+            return "https://mbasic.facebook.com/messages/";
         }
         if (url.startsWith("fb-messenger://") || url.startsWith("fb://")) {
-            return "https://www.messenger.com/t/";
+            return "https://mbasic.facebook.com/messages/";
         }
-        if (url.contains("m.facebook.com/messages") || url.contains("facebook.com/messages")) {
-            return "https://www.messenger.com/t/";
+        // أي رابط ماسنجر -> نحولو لنسخة Lite
+        if (url.contains("messenger.com") || url.contains("m.me") || url.contains("/messages") || url.contains("facebook.com/messages")) {
+            return "https://mbasic.facebook.com/messages/";
+        }
+        // أي رابط فيسبوك عادي -> نحولو لـ mbasic خفيف
+        if (url.contains("m.facebook.com")) {
+            return url.replace("m.facebook.com", "mbasic.facebook.com");
+        }
+        if (url.contains("www.facebook.com")) {
+            return url.replace("www.facebook.com", "mbasic.facebook.com");
         }
         return url;
     }
@@ -114,26 +91,25 @@ public class MainActivity extends Activity {
         closeBtn.bringToFront();
     }
 
-    // ========== ماسنجر في صفحة منبثقة ==========
     private void openInPopup(String url) {
         String cleanUrl = fixIntentUrl(url);
         if (popupView == null) {
             popupView = new WebView(this);
-            setupPopup(popupView);
+            setupLite(popupView);
             popupView.setWebViewClient(createClient(true));
             popupView.setWebChromeClient(createChrome());
             popupContainer.addView(popupView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            popupView.loadUrl(cleanUrl);
+        } else {
+            if (!cleanUrl.equals("https://mbasic.facebook.com/messages/")) {
+                popupView.loadUrl(cleanUrl);
+            }
         }
         showPopup();
-        popupView.loadUrl(cleanUrl);
     }
 
+    // Lite: نخبيو النافذة برك، ما نحذفوهاش باش القائمة تبقى
     private void closePopup() {
-        if (popupView != null) {
-            popupContainer.removeView(popupView);
-            try { popupView.destroy(); } catch (Exception e) {}
-            popupView = null;
-        }
         popupContainer.setVisibility(View.GONE);
         closeBtn.setVisibility(View.GONE);
     }
@@ -143,12 +119,16 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
+                // حول كل روابط فيسبوك لـ mbasic
+                if (url.contains("m.facebook.com") || url.contains("www.facebook.com")) {
+                    view.loadUrl(fixIntentUrl(url));
+                    return true;
+                }
                 if (url.startsWith("intent://") || url.startsWith("fb-messenger://") || url.startsWith("fb://")) {
                     openInPopup(fixIntentUrl(url));
                     return true;
                 }
-                // ماسنجر / رسائل من النافذة الرئيسية -> نافذة منبثقة
-                if (!isPopup && (url.contains("messenger.com") || url.contains("m.me") || url.contains("/messages") || url.contains("facebook.com/messages"))) {
+                if (!isPopup && (url.contains("messenger.com") || url.contains("m.me") || url.contains("/messages"))) {
                     openInPopup(url);
                     return true;
                 }
@@ -164,7 +144,7 @@ public class MainActivity extends Activity {
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
                 if (popupView == null) {
                     popupView = new WebView(MainActivity.this);
-                    setupPopup(popupView);
+                    setupLite(popupView);
                     popupView.setWebViewClient(createClient(true));
                     popupView.setWebChromeClient(createChrome());
                     popupContainer.addView(popupView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -185,34 +165,27 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // حاوية رئيسية ثابتة - فيها فيسبوك + النافذة فوقه
         root = new FrameLayout(this);
         setContentView(root);
-
         webView = new WebView(this);
-        setup(webView);
+        setupLite(webView);
         webView.setWebViewClient(createClient(false));
         webView.setWebChromeClient(createChrome());
         root.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // حاوية النافذة المنبثقة - مخبية في الأول
         popupContainer = new FrameLayout(this);
         popupContainer.setVisibility(View.GONE);
         popupContainer.setBackgroundColor(0xFFFFFFFF);
         root.addView(popupContainer, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // زر اغلاق النافذة
         closeBtn = new Button(this);
         closeBtn.setText("✕ إغلاق الدردشة");
         closeBtn.setVisibility(View.GONE);
         FrameLayout.LayoutParams btnParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        btnParams.topMargin = 20;
-        btnParams.leftMargin = 20;
+        btnParams.topMargin = 10;
+        btnParams.leftMargin = 10;
         root.addView(closeBtn, btnParams);
         closeBtn.setOnClickListener(v -> closePopup());
-
-        webView.loadUrl("https://m.facebook.com/login");
+        // Lite: نبدأ من mbasic مباشرة
+        webView.loadUrl("https://mbasic.facebook.com/login");
     }
 
     @Override
