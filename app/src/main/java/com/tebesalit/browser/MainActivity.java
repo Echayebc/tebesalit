@@ -21,26 +21,18 @@ public class MainActivity extends Activity {
     private FrameLayout popupContainer;
     private Button closeBtn;
 
-    // ========== جودة عالية + تسريع ==========
     private void setup(WebView w) {
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(w, true);
-
-        // تسريع العتاد - يخلي التصفح ناعم و الصور واضحة
         w.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         w.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         w.setOverScrollMode(View.OVER_SCROLL_NEVER);
-
         WebSettings s = w.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
-        s.setAppCacheEnabled(true);
-        s.setAppCachePath(getCacheDir().getAbsolutePath());
-
-        // جودة عالية
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setAllowFileAccess(true);
@@ -49,21 +41,14 @@ public class MainActivity extends Activity {
         s.setSupportZoom(true);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
-
-        // زيادة جودة الشاشة
         s.setTextZoom(100);
-        s.setDefaultZoom(WebSettings.ZoomDensity.FAR);
         s.setLoadsImagesAutomatically(true);
         s.setBlockNetworkImage(false);
         s.setBlockNetworkLoads(false);
-        s.setRenderPriority(WebSettings.RenderPriority.HIGH);
-        s.setEnableSmoothTransition(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
-
         w.setInitialScale(100);
-
         s.setUserAgentString("Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
     }
 
@@ -89,7 +74,6 @@ public class MainActivity extends Activity {
         closeBtn.bringToFront();
     }
 
-    // ========== ماسنجر في صفحة منبثقة ==========
     private void openInPopup(String url) {
         String cleanUrl = fixIntentUrl(url);
         if (popupView == null) {
@@ -122,7 +106,6 @@ public class MainActivity extends Activity {
                     openInPopup(fixIntentUrl(url));
                     return true;
                 }
-                // ماسنجر / رسائل من النافذة الرئيسية -> نافذة منبثقة
                 if (!isPopup && (url.contains("messenger.com") || url.contains("m.me") || url.contains("/messages") || url.contains("facebook.com/messages"))) {
                     openInPopup(url);
                     return true;
@@ -160,24 +143,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // حاوية رئيسية ثابتة - فيها فيسبوك + النافذة فوقه
         root = new FrameLayout(this);
         setContentView(root);
-
         webView = new WebView(this);
         setup(webView);
         webView.setWebViewClient(createClient(false));
         webView.setWebChromeClient(createChrome());
         root.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // حاوية النافذة المنبثقة - مخبية في الأول
         popupContainer = new FrameLayout(this);
         popupContainer.setVisibility(View.GONE);
         popupContainer.setBackgroundColor(0xFFFFFFFF);
         root.addView(popupContainer, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // زر اغلاق النافذة
         closeBtn = new Button(this);
         closeBtn.setText("✕ إغلاق الدردشة");
         closeBtn.setVisibility(View.GONE);
@@ -186,7 +162,6 @@ public class MainActivity extends Activity {
         btnParams.leftMargin = 20;
         root.addView(closeBtn, btnParams);
         closeBtn.setOnClickListener(v -> closePopup());
-
         webView.loadUrl("https://m.facebook.com/login");
     }
 
