@@ -1,6 +1,6 @@
 plugins { id 'com.android.application' }
 android {
-    namespace 'com.tebesalit.browser'
+    applicationId "com.tebesalit.lite"
     compileSdk 34
     defaultConfig {
         applicationId "com.tebesalit.browser"
